@@ -17,20 +17,24 @@ class Current_Clue_Widget(QWidget):
         if width:
             self.container.setFixedWidth(width)
 
+        fontsize = 17
+
         self.current_clue_label = SelectableLabel(self.container, text="Select a cell to see clue")
         self.current_clue_label.setTextFormat(Qt.RichText)
-        self.current_clue_label.setFont(QFont("Arial", 12))
+        self.current_clue_label.setFont(QFont("Arial", fontsize))
         self.current_clue_label.setWordWrap(True)
         self.current_clue_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
-        self.current_clue_label.setMinimumHeight(50)
+        self.current_clue_label.setMinimumHeight(60)
 
         # this is necessary to set so that the color of the menu on right click is also the same color
         self.current_clue_label.setStyleSheet(f"background-color: {shared_bg};")
 
-        self.number_label = QLabel()
-        self.number_label.setFixedWidth(20)
-        font = QFont("Arial", 12)
+        self.number_label = QLabel("111D")
+        #self.number_label.setFixedWidth(self.number_label.sizeHint().width())
+        self.number_label.setFixedWidth(40)
+        font = QFont("Arial", fontsize)
         font.setBold(True)
+        self.number_label.setAlignment(Qt.AlignVCenter)
         self.number_label.setFont(font)
         self.number_label.setStyleSheet(f"background-color: transparent;")
 
@@ -38,7 +42,7 @@ class Current_Clue_Widget(QWidget):
         row_layout.setContentsMargins(0, 0, 0, 0)
         row_layout.addSpacing(12)
         row_layout.addWidget(self.number_label)
-        row_layout.addSpacing(12)
+        row_layout.addSpacing(6)
         row_layout.addWidget(self.current_clue_label)
         self.container.setLayout(row_layout)
 

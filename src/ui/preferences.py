@@ -38,9 +38,84 @@ class preferences(QWidget):
         self.layout.addLayout(self.directory_input)
 
         self.apply_button = QPushButton("Apply")
-        #self.apply_button.clicked.connect(lambda: self._save_api_key(self.gemini_api_key_input.text()))
         self.apply_button.clicked.connect(self._save_settings)
+
+        self.customLookupLabel()
+
         self.layout.addWidget(self.apply_button)
+
+    def customLookupLabel(self):
+        self.customLookupLabel = QLabel("Custom Lookup")
+
+        self.description = QLabel("Enter custom links to lookup words. The link must include {word} to represent the word. Here is an example for onelook https://www.onelook.com/?w={word}")
+        self.description.setWordWrap(True)
+
+        self.layout.addWidget(self.customLookupLabel)
+
+        self.existingLinks = self.settings.value("custom_lookup").copy() if self.settings.value("custom_lookup") else []
+
+        for i, link in enumerate(self.existingLinks):
+            row = QHBoxLayout()
+            editableLink = QLineEdit(link)
+            row.addWidget(editableLink)
+            deleteLink = QPushButton("Remove")
+
+            def delete(_=None, link=link, row=row, editableLink=editableLink, deleteLink=deleteLink):
+                editableLink.deleteLater()
+                deleteLink.deleteLater()
+                row.deleteLater()
+                self.existingLinks.remove(link)
+
+            deleteLink.clicked.connect(delete)
+            row.addWidget(deleteLink)
+            self.layout.addLayout(row)
+
+        addButton = QPushButton("Add")
+        addButton.setDisabled(True)
+        addButton.clicked.connect(self.addCustomLookup)
+
+        self.newEditableLinkRow = QHBoxLayout()
+        self.newEditableLink = QLineEdit("")
+        self.newEditableLink.textChanged.connect(lambda text: addButton.setDisabled(True) if text == "" or text in self.settings.value("custom_lookup")  else addButton.setDisabled(False))
+        self.newEditableLinkRow.addWidget(self.newEditableLink)
+
+        self.newEditableLinkRow.addWidget(addButton)
+
+        self.layout.addLayout(self.newEditableLinkRow)
+
+    def addCustomLookup(self):
+       text = self.newEditableLink.text()
+       self.existingLinks.append(text)
+       i = self.index_of_layout(self.layout, self.newEditableLinkRow)
+
+       if i == -1:
+           return
+
+       row = QHBoxLayout()
+       editableLink = QLineEdit(text)
+       row.addWidget(editableLink)
+       deleteLink = QPushButton("Remove")
+
+       # could just refactor this...
+       def delete():
+           editableLink.deleteLater()
+           deleteLink.deleteLater()
+           row.deleteLater()
+           self.existingLinks.remove(text)
+
+       deleteLink.clicked.connect(delete)
+       row.addWidget(deleteLink)
+
+       self.newEditableLink.setText("")
+
+       self.layout.insertLayout(i, row)
+
+    def index_of_layout(self, parent_layout, target_layout):
+        for i in range(parent_layout.count()):
+            item = parent_layout.itemAt(i)
+            if item.layout() is target_layout:
+                return i
+        return -1
 
     def pick_puzzles_dir(self):
         path = QFileDialog.getExistingDirectory(self, "Select Directory", self.settings.value("puzzles_dir") or QDir.homePath())
@@ -50,3 +125,5 @@ class preferences(QWidget):
     def _save_settings(self): 
         self.settings.setValue("gemini_api_key", self.gemini_api_key_input.text())
         self.settings.setValue("puzzles_dir", self.puzzles_dir_input.text())
+        self.settings.setValue("custom_lookup", self.existingLinks)
+

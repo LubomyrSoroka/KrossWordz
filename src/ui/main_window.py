@@ -90,7 +90,6 @@ class MainWindow(QMainWindow):
         some_menu.addAction(self.preferences_action)
         self.preferences_action.triggered.connect(self.show_preferences)
 
-        self.preferences_window = preferences()
         self.settings = QSettings("KrossWordz", "KrossWordz")
 
 
@@ -185,7 +184,8 @@ class MainWindow(QMainWindow):
         self.cells_filled.setText(f"{count}/{self.current_puzzle.fillable_cell_count}")
 
     def show_preferences(self):
-        self.preferences_window.show()        
+        preferences_window = preferences()
+        preferences_window.show()        
 
 
     def display_message(self, correct: bool):

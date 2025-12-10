@@ -1,9 +1,10 @@
-from PySide6.QtCore import Qt, QPoint, Signal
+from PySide6.QtCore import Qt, QPoint, Signal, QSettings
 from PySide6.QtWidgets import QApplication, QLabel, QMenu
-from ui.lookup import open_onelook
+import webbrowser
 
 class SelectableLabel(QLabel):
     lookup_word = Signal(str)
+    settings = QSettings("KrossWordz", "KrossWordz")
 
     def __init__(self, parent=None, text=None):
         super().__init__(parent=parent, text=text)
@@ -17,13 +18,14 @@ class SelectableLabel(QLabel):
     def _show_menu(self, pos: QPoint):
         menu = QMenu(self)
         copy_action = menu.addAction("Copy")
+        copy_action.triggered.connect(lambda: QApplication.clipboard().setText(self.selectedText()) if self.hasSelectedText() else None)
+
         select_all_action = menu.addAction("Select All")
-        lookup_action = menu.addAction("Lookup this selection in the dictionary")
-        action = menu.exec(self.mapToGlobal(pos))
-        if action == copy_action and self.hasSelectedText():
-            QApplication.clipboard().setText(self.selectedText())
-        elif action == select_all_action:
-            self.setSelection(0, len(self.text()))
-        elif action == lookup_action:
-            open_onelook(self.selectedText())
+        select_all_action.triggered.connect(lambda: self.setSelection(0, len(self.text())))
+
+        for link in self.settings.value("custom_lookup") or []:
+            action = menu.addAction(f"Lookup in {link}")
+            action.triggered.connect(lambda _, link=link: webbrowser.open(link.format(word = self.selectedText()), new=2))
+
+        menu.exec(self.mapToGlobal(pos))
 

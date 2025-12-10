@@ -3,13 +3,13 @@ from __future__ import annotations
 from math import sqrt
 from typing import List, Optional, Tuple
 
-from PySide6.QtCore import Qt, Signal, QPoint, QPointF, QRectF
+from PySide6.QtCore import Qt, Signal, QPoint, QPointF, QRectF, QSettings
 from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPolygon, QPolygonF
 from PySide6.QtWidgets import QWidget, QApplication, QMenu, QSizePolicy
 
 from models.krossword import KrossWordCell, KrossWordPuzzle
 from ui.ai_windows import ai_window
-from ui.lookup import open_onelook
+import webbrowser
 
 class KrossWordWidget(QWidget):
     """Widget for displaying and interacting with a crossword puzzle."""
@@ -42,6 +42,7 @@ class KrossWordWidget(QWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         self.dirty = False
         self.referenced_cells = []
+        self.settings = QSettings("KrossWordz", "KrossWordz")
     
 
     # ------------------------------------------------------------------
@@ -66,7 +67,9 @@ class KrossWordWidget(QWidget):
         row = pos.y()//self.cell_size
         col = pos.x()//self.cell_size
 
-        if row != self.selected_row or col != self.selected_col:
+        start, end = self._get_word_bounds(self.selected_row, self.selected_col, self.highlight_mode)
+
+        if not (row >= start[1] and row <= end[1] and  col >= start[0] and col<= end[0]):
             return
             
         clue = self.find_clue_for_cell(row, col, self.highlight_mode)
@@ -74,8 +77,13 @@ class KrossWordWidget(QWidget):
         menu = QMenu(self)
         explain_action = menu.addAction("Explain this clue and answer pair")
         explain_action.triggered.connect(lambda : self.request_clue_explanation.emit(clue.text, clue.answer))
-        lookup_action = menu.addAction("Lookup this answer in the dictionary")
-        lookup_action.triggered.connect(lambda : open_onelook(clue.answer))
+
+        for link in self.settings.value("custom_lookup") or []:
+            action = menu.addAction(f"Lookup in {link}")
+            action.triggered.connect(lambda _, link=link: webbrowser.open(link.format(word=clue.answer), new=2))
+
+        # lookup_action = menu.addAction("Lookup this answer in the dictionary")
+        # lookup_action.triggered.connect(lambda : open_onelook(clue.answer))
         menu.exec(self.mapToGlobal(pos))
     
 

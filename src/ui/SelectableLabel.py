@@ -23,8 +23,8 @@ class SelectableLabel(QLabel):
         select_all_action = menu.addAction("Select All")
         select_all_action.triggered.connect(lambda: self.setSelection(0, len(self.text())))
 
-        for link in self.settings.value("custom_lookup") or []:
-            action = menu.addAction(f"Lookup in {link}")
+        for linkName, link in self.settings.value("custom_lookup") or []:
+            action = menu.addAction(f"Lookup in {linkName}")
             action.triggered.connect(lambda _, link=link: webbrowser.open(link.format(word = self.selectedText()), new=2))
 
         menu.exec(self.mapToGlobal(pos))

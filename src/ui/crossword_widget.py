@@ -78,8 +78,8 @@ class KrossWordWidget(QWidget):
         explain_action = menu.addAction("Explain this clue and answer pair")
         explain_action.triggered.connect(lambda : self.request_clue_explanation.emit(clue.text, clue.answer))
 
-        for link in self.settings.value("custom_lookup") or []:
-            action = menu.addAction(f"Lookup in {link}")
+        for linkName, link in self.settings.value("custom_lookup") or []:
+            action = menu.addAction(f"Lookup in {linkName}")
             action.triggered.connect(lambda _, link=link: webbrowser.open(link.format(word=clue.answer), new=2))
 
         # lookup_action = menu.addAction("Lookup this answer in the dictionary")

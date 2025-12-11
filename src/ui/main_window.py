@@ -92,7 +92,6 @@ class MainWindow(QMainWindow):
 
         self.settings = QSettings("KrossWordz", "KrossWordz")
 
-
         # Create File menu
         file_menu = menubar.addMenu("File")
 

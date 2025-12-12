@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from math import sqrt
 from typing import List, Optional, Tuple
+from urllib.parse import quote
 
 from PySide6.QtCore import Qt, Signal, QPoint, QPointF, QRectF, QSettings
 from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPolygon, QPolygonF
@@ -78,12 +79,16 @@ class KrossWordWidget(QWidget):
         explain_action = menu.addAction("Explain this clue and answer pair")
         explain_action.triggered.connect(lambda : self.request_clue_explanation.emit(clue.text, clue.answer))
 
+        explain_action_gpt_web = menu.addAction("Explain this clue and answer pair through ChatGPT on your web browser")
+
+        prompt =  f'Please explain this American crossword clue to me. The clue is "{clue.text}" and the answer is "{clue.answer}"'
+        encoded_prompt = quote(prompt)
+        explain_action_gpt_web.triggered.connect(lambda : webbrowser.open(f"https://chatgpt.com/?prompt={encoded_prompt}", new=2))
+
         for linkName, link in self.settings.value("custom_lookup") or []:
             action = menu.addAction(f"Lookup in {linkName}")
             action.triggered.connect(lambda _, link=link: webbrowser.open(link.format(word=clue.answer), new=2))
 
-        # lookup_action = menu.addAction("Lookup this answer in the dictionary")
-        # lookup_action.triggered.connect(lambda : open_onelook(clue.answer))
         menu.exec(self.mapToGlobal(pos))
     
 
@@ -1065,4 +1070,3 @@ class KrossWordWidget(QWidget):
         for clue in self.puzzle.down_clues:
             if self.word_filled(clue.start_col, clue.start_row, "down"):
                 self.greyout_clue.emit(clue.number, "down", True)
-

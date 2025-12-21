@@ -8,10 +8,7 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QLabel,
     QSizePolicy,
-    QTextEdit,
     QScrollArea,
-    QApplication,
-    QMenu,
     QFrame,
 )
 
@@ -19,22 +16,30 @@ from PySide6.QtWidgets import (
 class CluesTextEdit(SelectableLabel):
     """Text edit styled for clues that forwards navigation keys to the parent."""
 
-    selectClue = Signal(int, str)
 
-    def __init__(self, number, direction, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         self.setAlignment(Qt.AlignLeft | Qt.AlignTop)
         self.setWordWrap(True)
         self.setTextFormat(Qt.RichText)
+        self.pos = None
+  
+    def mousePressEvent(self, ev):
+        if ev.button() == Qt.LeftButton:
+            self.pos = (ev.pos().x(), ev.pos().y())
+        super().mousePressEvent(ev) 
 
-        self._default_stylesheet = self.styleSheet()
-        self.number = number
-        self.direction = direction
-        self.styelsheet = dict()
-        self.styelsheet["highlight"] = ""
-        self.styelsheet["grey"] = ""
-
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            newPos = (event.pos().x(), event.pos().y())
+            if (newPos[0]-self.pos[0])^2 + (newPos[1]-self.pos[1])^2 < 5:
+                parent = self.parentWidget()
+                if parent is not None:
+                    # Call the parent’s mousePressEvent manually
+                    parent.mousePressEvent(event)
+                    return  # stop processing here
+        super().mouseReleaseEvent(event)
 
     def setText(self, text):
         """Set clue text and resize the label to tightly wrap the content."""
@@ -54,26 +59,12 @@ class CluesTextEdit(SelectableLabel):
         else:
             super().keyPressEvent(event)
 
-    def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            self.selectClue.emit(self.number, self.direction)
-        super().mousePressEvent(event)
+
 
     def resizeEvent(self, event):  # noqa: N802
         super().resizeEvent(event)
         self._shrink_to_fit()
 
-    def set_highlighted(self, highlighted: bool) -> None:
-        """Toggle highlight coloring on the text edit background."""
-        self.styelsheet["highlight"] = "background-color: #47c8ff;" if highlighted else "background-color: transparent;"
-        self.applyStyleSheet()
-        
-    def set_grey_text(self, make_grey: bool) -> None:
-        self.styelsheet["grey"] = "color: grey;" if make_grey else ""
-        self.applyStyleSheet()
-
-    def applyStyleSheet(self):
-        self.setStyleSheet(self.styelsheet["highlight"] + self.styelsheet["grey"])
 
     def _shrink_to_fit(self) -> None:
         """Match label height to wrapped text height."""
@@ -121,7 +112,7 @@ class CluesPanel(QWidget):
         self.down_text_edit = self._create_section(self.layout, "DOWN", down_clues)
         self.referenced_clues = []
         self.styleSheets = dict()
-
+    
 
     def _create_section(self, parent_layout: QHBoxLayout, title: str, clues: list[str] ) -> CluesTextEdit:
         container = QWidget(self)
@@ -156,7 +147,8 @@ class CluesPanel(QWidget):
         last_text_edit = None
 
         for clue in clues:
-            clue_widget = ClueWidget()
+            clue_widget = ClueWidget(clue.number, clue.direction, clue.references)
+            clue_widget.selectClue.connect(self._handle_clue_click)
             clue_widget.setContentsMargins(0, 4, 0, 4)
             clue_widget.setStyleSheet("border-left: 8px solid; border-color: transparent;")
             clue_layout = QHBoxLayout()
@@ -171,7 +163,6 @@ class CluesPanel(QWidget):
             clue_number.setFont(clue_font)
 
             text_edit = CluesTextEdit(clue.number, clue.direction, scroll_content)
-            text_edit.selectClue.connect(self._handle_clue_click)
             text_edit.setText(clue.text.strip())
 
             clue_layout.addSpacing(12)
@@ -214,16 +205,10 @@ class CluesPanel(QWidget):
         if self._highlighted_key and self._highlighted_key != self._side_highlighted_key:
             self.clues[self._highlighted_key].applyToAll = "border-left: 8px solid transparent; background-color: transparent;"
             self.clues[self._highlighted_key].applyToText = "background-color: transparent;"
-            
             self.applyStyleSheet(self.clues[self._highlighted_key]) 
 
         # highlight the current clue
         if clue:
-            # clue.highlight = """
-            # QWidget#clueRow { border-left: 8px solid #47c8ff; background-color: #47c8ff; }
-            # QWidget#clueRow * { background-color: transparent; }
-            # """           
-
             clue.applyToAll =  "border-left: 8px solid #47c8ff; background-color: #47c8ff;"  
             clue.applyToText = "background-color: transparent;"
             self._highlighted_key = key
@@ -263,7 +248,7 @@ class CluesPanel(QWidget):
                 self._scroll_clue_into_view(direction, sideBox)
             return
 
-        if self._side_highlighted_key:
+        if self._side_highlighted_key and self._side_highlighted_key != self._highlighted_key:
             #self.clues[self._side_highlighted_key].setStyleSheet(f"border-left: 8px solid; border-color: transparent; background-color: transparent;")
             self.clues[self._side_highlighted_key].applyToAll = "border-left: 8px solid transparent; background-color: transparent; "
             self.clues[self._side_highlighted_key].applyToText = "background-color: transparent;"
@@ -280,9 +265,12 @@ class CluesPanel(QWidget):
         
 
 
-    def _handle_clue_click(self, number: int, direction: str) -> None:
+    def _handle_clue_click(self, number: int, direction: str, references) -> None:
         """React to clue clicks by highlighting and bubbling the event."""
+        self.clear_referenced_clues_highlight()
         self.highlight_clue(number, direction)
+        for reference in references:
+            self.highlight_reference_clue(reference["number"], reference["direction"])
         self.clue_selected.emit(number, direction)
 
     def _scroll_clue_into_view(self, direction: str, text_edit: CluesTextEdit) -> None:
@@ -338,7 +326,9 @@ class CluesPanel(QWidget):
 
 
 class ClueWidget(QWidget):
-    def __init__(self):
+    selectClue = Signal(int, str, list)
+
+    def __init__(self, number: int, direction: str, references):
         super().__init__()
 
         # without this the margins and the spacing does not get colored in with the background
@@ -347,3 +337,11 @@ class ClueWidget(QWidget):
         self.applyToAll = ""
         self.applyToText = ""
         self.grey = ""
+        self.number = number
+        self.direction = direction
+        self.references = references
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.selectClue.emit(self.number, self.direction, self.references)
+        super().mousePressEvent(event)

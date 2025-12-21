@@ -125,14 +125,19 @@ class IPUZParser:
                             cell.is_circled = True
 
                     clue_number = puzzle_cell['cell']
-                    if clue_number > 0:
-                        # White cell with a clue number
+                    if clue_number == None: # empty white cell
                         cell.is_black = False
-                        cell.clue_number = clue_number
-                    elif clue_number == 0:
-                        # Empty white cell (no clue number, but still playable)
-                        cell.is_black = False
-                        cell.solution = ""
+                    else:
+                        if isinstance(clue_number, str):
+                            clue_number = int(clue_number)
+                        if clue_number > 0:
+                            # White cell with a clue number
+                            cell.is_black = False
+                            cell.clue_number = clue_number
+                        elif clue_number == 0:
+                            # Empty white cell (no clue number, but still playable)
+                            cell.is_black = False
+                            cell.solution = ""
 
                 # Override solution from solution grid if available
                 if isinstance(solution_char, str):

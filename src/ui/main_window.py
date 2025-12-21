@@ -461,7 +461,10 @@ class MainWindow(QMainWindow):
 
         self.title_label.setText(self.current_puzzle.title)
         if self.current_puzzle.date:
-            d = datetime.strptime(self.current_puzzle.date, "%m/%d/%Y")
+            try:
+                d = datetime.strptime(self.current_puzzle.date, "%m/%d/%Y")
+            except ValueError:
+                d = datetime.strptime(self.current_puzzle.date, "%Y-%m-%d")
             formatted = d.strftime("%A, %B %d, %Y")
             self.date_label.setText(formatted)
 

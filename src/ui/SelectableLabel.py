@@ -1,5 +1,7 @@
 from PySide6.QtCore import Qt, QPoint, Signal, QSettings
 from PySide6.QtWidgets import QApplication, QLabel, QMenu
+from PySide6.QtGui import QPalette
+
 import webbrowser
 
 class SelectableLabel(QLabel):
@@ -14,9 +16,24 @@ class SelectableLabel(QLabel):
 
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self._show_menu)
+        app_palette = QApplication.palette()
+
+        self.default_bg = app_palette.color(QPalette.Window).name()
+        self.default_text = app_palette.color(QPalette.WindowText).name()
+        self.highlight_color = app_palette.color(QPalette.Highlight).name()
 
     def _show_menu(self, pos: QPoint):
         menu = QMenu(self)
+        menu.setStyleSheet(f"""
+        QMenu {{
+            background-color: {self.default_bg};       /* menu background */
+            color: {self.default_text};                     /* text color */
+        }}
+        QMenu::item:selected {{               /* hover / selected item */
+            background-color: {self.highlight_color};
+        }}
+        """)
+
         copy_action = menu.addAction("Copy")
         copy_action.triggered.connect(lambda: QApplication.clipboard().setText(self.selectedText()) if self.hasSelectedText() else None)
 

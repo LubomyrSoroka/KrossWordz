@@ -162,7 +162,7 @@ class CluesPanel(QWidget):
             clue_font.setBold(True)
             clue_number.setFont(clue_font)
 
-            text_edit = CluesTextEdit(clue.number, clue.direction, scroll_content)
+            text_edit = CluesTextEdit(clue_widget)
             text_edit.setText(clue.text.strip())
 
             clue_layout.addSpacing(12)

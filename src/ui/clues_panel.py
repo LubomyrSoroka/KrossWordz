@@ -1,7 +1,7 @@
 import math
 from ui.SelectableLabel import SelectableLabel
 from PySide6.QtCore import Qt, QPoint, QTimer, QEasingCurve, Signal
-from PySide6.QtGui import QFont, QTextCursor, QTextDocument 
+from PySide6.QtGui import QFont, QTextCursor, QTextDocument, QMouseEvent
 from PySide6.QtWidgets import (
     QWidget,
     QHBoxLayout,
@@ -27,19 +27,37 @@ class CluesTextEdit(SelectableLabel):
   
     def mousePressEvent(self, ev):
         if ev.button() == Qt.LeftButton:
-            self.pos = (ev.pos().x(), ev.pos().y())
-        super().mousePressEvent(ev) 
-
-    def mouseReleaseEvent(self, event):
-        if event.button() == Qt.LeftButton:
-            newPos = (event.pos().x(), event.pos().y())
-            if (newPos[0]-self.pos[0])^2 + (newPos[1]-self.pos[1])^2 < 5:
+            if ev.modifiers() & Qt.ShiftModifier:
+                # Create a new event with Shift removed
+                new_ev = QMouseEvent(
+                    ev.type(),
+                    ev.position(),      # or ev.pos() in PyQt5
+                    ev.globalPosition(),# or ev.globalPos() in PyQt5
+                    ev.button(),
+                    ev.buttons(),
+                    ev.modifiers() & ~Qt.ShiftModifier
+                )
+                super().mousePressEvent(new_ev)
+            else:
                 parent = self.parentWidget()
-                if parent is not None:
-                    # Call the parent’s mousePressEvent manually
-                    parent.mousePressEvent(event)
-                    return  # stop processing here
-        super().mouseReleaseEvent(event)
+                if parent is not None: 
+                    parent.mousePressEvent(ev)
+
+    def mouseMoveEvent(self, ev):
+        if ev.buttons() & Qt.LeftButton and ev.modifiers() & Qt.ShiftModifier:
+            # remove Shift for drag
+            new_ev = QMouseEvent(
+                ev.type(),
+                ev.position(),
+                ev.globalPosition(),
+                ev.button(),
+                ev.buttons(),
+                ev.modifiers() & ~Qt.ShiftModifier
+            )
+            super().mouseMoveEvent(new_ev)
+            return
+        super().mouseMoveEvent(ev) 
+
 
     def setText(self, text):
         """Set clue text and resize the label to tightly wrap the content."""

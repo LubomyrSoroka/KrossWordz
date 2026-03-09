@@ -35,7 +35,7 @@ class Clue:
     """Represents a clue across or down"""
     number: int
     text: str
-    answer: str
+    answer: str # is this ever used?
     start_row: int
     start_col: int
     length: int
@@ -97,6 +97,7 @@ class KrossWordPuzzle:
         """Get all clues (across + down)"""
         return self.across_clues + self.down_clues
 
+    # is this function ever used?
     def validate_solution(self, number: int, direction: str) -> bool:
         """Validate if a clue is correctly solved"""
         clue = self.get_clue(number, direction)

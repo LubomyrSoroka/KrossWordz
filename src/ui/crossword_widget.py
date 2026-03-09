@@ -79,19 +79,25 @@ class KrossWordWidget(QWidget):
             
         clue = self.find_clue_for_cell(row, col, self.highlight_mode)
 
+        solnWord = ''
+        word_cells = self.get_current_word_coordinates()
+        for cell_row, cell_col in word_cells:
+            solnWord += self.puzzle.cells[cell_row][cell_col].solution
+
         menu = QMenu(self)
         explain_action = menu.addAction("Explain this clue and answer pair")
-        explain_action.triggered.connect(lambda : self.request_clue_explanation.emit(clue.text, clue.answer))
+        explain_action.triggered.connect(lambda : self.request_clue_explanation.emit(clue.text, solnWord))
 
-        explain_action_gpt_web = menu.addAction("Explain this clue and answer pair through ChatGPT on your web browser")
+        explain_action_gpt_web = menu.addAction("Explain this clue and answer pair through ChatGPT in your web browser")
 
-        prompt =  f'Please explain this American crossword clue to me. The clue is "{clue.text}" and the answer is "{clue.answer}"'
+        prompt =  f'Please explain this American crossword clue to me. The clue is "{clue.text}" and the answer is "{solnWord}"'
         encoded_prompt = quote(prompt)
         explain_action_gpt_web.triggered.connect(lambda : webbrowser.open(f"https://chatgpt.com/?prompt={encoded_prompt}", new=2))
 
+
         for linkName, link in self.settings.value("custom_lookup") or []:
             action = menu.addAction(f"Lookup in {linkName}")
-            action.triggered.connect(lambda _, link=link: webbrowser.open(link.format(word=clue.answer), new=2))
+            action.triggered.connect(lambda _, link=link: webbrowser.open(link.format(word=solnWord), new=2))
 
         menu.exec(self.mapToGlobal(pos))
     

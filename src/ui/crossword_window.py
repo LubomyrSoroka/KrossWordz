@@ -134,7 +134,28 @@ def load_puzzle(window, normalized_path: str):
         window.left_layout.addWidget(window.crossword_widget)
         window.left_layout.setStretchFactor(window.crossword_widget, 1)
 
-    window.crossword_widget.set_puzzle(window.current_puzzle)
+
+    directory = Path(normalized_path).parent
+    filename = Path(normalized_path).stem
+    overlay_start = None
+    overlay_end = None
+    filePath = directory / f"{filename}_start.png" 
+    if filePath.is_file():
+        overlay_start = filePath
+    else:
+        filePath = directory / f"{filename}_start.gif" # is this even possible for the starting overlay?
+        if filePath.is_file():
+            overlay_start = filePath
+        
+    filePath = directory / f"{filename}_end.png" 
+    if filePath.is_file():
+        overlay_end = filePath
+    else:
+        filePath = directory / f"{filename}_end.gif" # is this even possible for the starting overlay?
+        if filePath.is_file():
+            overlay_end = filePath
+
+    window.crossword_widget.set_puzzle(window.current_puzzle, str(overlay_start), str(overlay_end ))
 
     window.check_and_reveal = Check_and_Reveal(window.crossword_widget, window.current_puzzle)
     

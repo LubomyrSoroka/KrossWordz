@@ -46,6 +46,7 @@ class Check_and_Reveal(QObject):
         self.grey_all_clues.emit()
         self.crossword_widget.filled_cells = self.crossword_widget.puzzle.fillable_cell_count
         self.crossword_widget.cell_count_changed.emit(self.crossword_widget.filled_cells)
+        self.crossword_widget.puzzle_solved = True
         self.crossword_widget.display_message.emit(True)
         self.crossword_widget.update()
     

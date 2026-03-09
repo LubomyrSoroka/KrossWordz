@@ -4,8 +4,8 @@ from math import sqrt
 from typing import List, Optional, Tuple
 from urllib.parse import quote
 
-from PySide6.QtCore import Qt, Signal, QPoint, QPointF, QRectF, QSettings
-from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPolygon, QPolygonF
+from PySide6.QtCore import Qt, Signal, QPoint, QPointF, QRectF, QSettings, QRect, QTimer
+from PySide6.QtGui import QBrush, QColor, QFont, QPainter, QPen, QPolygon, QPolygonF, QPixmap, QMovie
 from PySide6.QtWidgets import QWidget, QApplication, QMenu, QSizePolicy
 
 from models.krossword import KrossWordCell, KrossWordPuzzle
@@ -44,6 +44,10 @@ class KrossWordWidget(QWidget):
         self.dirty = False
         self.referenced_cells = []
         self.settings = QSettings("KrossWordz", "KrossWordz")
+        self.overlayStart = None
+        self.overlayEnd = None
+        self.overlayMovie = None
+        self.timer = None
     
 
     # ------------------------------------------------------------------
@@ -128,11 +132,13 @@ class KrossWordWidget(QWidget):
                 start_row -= 1
             return start_row, col
 
-    def set_puzzle(self, puzzle: KrossWordPuzzle) -> None:
+    def set_puzzle(self, puzzle: KrossWordPuzzle, overlayStart, overlayEnd) -> None:
         self.highlight_mode = "across"
         self.selected_row = 0
         self.selected_col = 0
         self.puzzle = puzzle
+        self.overlayStart = overlayStart
+        self.overlayEnd = overlayEnd
         self._recompute_cell_metrics()
         self.select_first_square()
         self.update()
@@ -206,6 +212,7 @@ class KrossWordWidget(QWidget):
         painter.setRenderHint(QPainter.Antialiasing)
         self._draw_cells(painter)
         self._draw_grid(painter)
+        self._draw_overlay(painter)
 
     def mousePressEvent(self, event):  # noqa: N802
         if not self.puzzle or event.button() == Qt.MouseButton.RightButton:
@@ -289,6 +296,45 @@ class KrossWordWidget(QWidget):
     # ------------------------------------------------------------------
     # Drawing helpers
     # ------------------------------------------------------------------
+    def _draw_overlay(self, painter:QPainter) -> None:
+        if not self.puzzle_solved:
+            overlayToUse = self.overlayStart
+        else:
+            overlayToUse = self.overlayEnd or self.overlayStart
+
+        if overlayToUse is None:
+            return
+
+        if overlayToUse.lower().endswith(".gif"):
+            if not self.overlayMovie:
+                self.overlayMovie = QMovie(overlayToUse)
+                self.overlayMovie.start()  # start the animation
+                self.timer = QTimer(self)
+                self.timer.timeout.connect(self.update)
+                self.timer.start(30)
+
+
+            # Get the current frame
+            frame_pixmap = self.overlayMovie.currentPixmap()
+
+            rect = QRect(0, 0, self.puzzle.width * self.cell_size,
+                        self.puzzle.height * self.cell_size)
+            painter.drawPixmap(rect, frame_pixmap)
+
+        else:
+            if self.overlayMovie:
+                self.overlayMovie.stop()
+                self.overlayMovie = None
+            if self.timer:
+                self.timer.stop()
+            # you should stop the movie if it is playing
+            pixmap = QPixmap(overlayToUse)
+            rect = QRect(0, 0, self.puzzle.width*self.cell_size, self.puzzle.height*self.cell_size)
+            painter.drawPixmap(rect, pixmap)
+
+
+        
+        
     def _draw_grid(self, painter: QPainter) -> None:
         painter.setPen(QPen(Qt.gray, 2))
 

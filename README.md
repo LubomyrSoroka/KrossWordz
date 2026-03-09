@@ -12,6 +12,7 @@ A native Qt/Python application for crossword puzzles that supports .ipuz file fo
 - Save and restore progress inside the `.ipuz` file
 - Optional AI-powered clue explanations through Gemini
 - Cross-platform (Windows, macOS, Linux)
+- Overlays that can be displayed when the puzzle starts and is completed (see overlays to see how they work)
 
 ## Dependencies
 - PySide6 (Qt6 for Python)
@@ -27,6 +28,10 @@ python src/main.py path/to/puzzle.ipuz
 
 ### Gemini AI Integration
 CrossWordz can ask Google’s Gemini models to explain any clue. Set your Gemini API key in **Preferences → AI** (stored via `QSettings`) and the AI tab becomes active. Without a key, CrossWordz runs normally; the AI tab simply shows a reminder to configure the key.
+
+##Overlays
+To include an overlay with a puzzle, in the same directory as the puzzle include a file with the same name as the puzzle ending with _start or _end. E.g. if you have a puzzle called 
+myPuzzle.ipuz, then in the same directory include myPuzzle_start.png and myPuzzle_end.png to include overlays in the puzzle (both are optional). An overlay can either by .png or .gif file.
 
 ## Build a macOS App Bundle
 The project ships with a PyInstaller spec that produces a signed-ready `.app` bundle with a native `.ipuz` file association.

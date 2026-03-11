@@ -141,21 +141,21 @@ def load_puzzle(window, normalized_path: str):
     overlay_end = None
     filePath = directory / f"{filename}_start.png" 
     if filePath.is_file():
-        overlay_start = filePath
+        overlay_start = str(filePath)
     else:
         filePath = directory / f"{filename}_start.gif" # is this even possible for the starting overlay?
         if filePath.is_file():
-            overlay_start = filePath
+            overlay_start = str(filePath)
         
     filePath = directory / f"{filename}_end.png" 
     if filePath.is_file():
-        overlay_end = filePath
+        overlay_end = str( filePath )
     else:
         filePath = directory / f"{filename}_end.gif" # is this even possible for the starting overlay?
         if filePath.is_file():
-            overlay_end = filePath
+            overlay_end = str ( filePath )
 
-    window.crossword_widget.set_puzzle(window.current_puzzle, str(overlay_start), str(overlay_end ))
+    window.crossword_widget.set_puzzle(window.current_puzzle, overlay_start, overlay_end)
 
     window.check_and_reveal = Check_and_Reveal(window.crossword_widget, window.current_puzzle)
     

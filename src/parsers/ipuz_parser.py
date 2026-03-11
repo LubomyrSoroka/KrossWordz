@@ -69,15 +69,15 @@ class IPUZParser:
         self._parse_clues(puzzle, clues_data)
 
         self.get_fillable_cell_count(puzzle)
-        self.update_clues_references(puzzle)
+        #self.update_clues_references(puzzle)
 
         return puzzle
     
-    def update_clues_references(self, puzzle):
-        for clue_list in [puzzle.across_clues, puzzle.down_clues]:
-            for clue in clue_list:
-                for reference in clue.references:
-                    puzzle.get_clue(reference["number"], reference["direction"]).references.append({"number":clue.number, "direction":clue.direction}) 
+    # def update_clues_references(self, puzzle):
+    #     for clue_list in [puzzle.across_clues, puzzle.down_clues]:
+    #         for clue in clue_list:
+    #             for reference in clue.references:
+    #                 puzzle.get_clue(reference["number"], reference["direction"]).references.append({"number":int(clue.number), "direction":clue.direction.lower()}) 
 
     def get_fillable_cell_count(self, puzzle: KrossWordPuzzle):
         puzzle.fillable_cell_count = 0
@@ -163,9 +163,10 @@ class IPUZParser:
                 # Modern format: {"clue": "text", "answer": "answer"}
                 clue_text = clue_data.get('clue', '')
                 answer = clue_data.get('answer', '').upper()
-                clue_number = clue_data.get('number')
+                clue_number = int(clue_data.get('number'))
                 clue_references = clue_data.get('references', [])
                 for clue in clue_references:
+                    clue['number'] = int(clue['number'])
                     clue["direction"] = clue["direction"].lower()   
 
             elif isinstance(clue_data, list):

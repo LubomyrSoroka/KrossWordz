@@ -59,6 +59,7 @@ class KrossWordWidget(QWidget):
                 if not self.puzzle.cells[j][i].is_black:
                     self.selected_row = j
                     self.selected_col = i
+                    self.checkOneSquare()
                     return 
 
         raise Exception("Puzzle has no non-black cells")
@@ -229,13 +230,21 @@ class KrossWordWidget(QWidget):
             if not self.puzzle.cells[row][col].is_black:
                 if row == self.selected_row and col == self.selected_col:
                     self.highlight_mode = "down" if self.highlight_mode == "across" else "across"
+                    self.checkOneSquare()
                 else:
                     self.selected_row = row
                     self.selected_col = col
+                    self.checkOneSquare()
+
                 self.setFocus()
                 self.cell_selected.emit(row, col)
                 self.update()
                 self.dirty = True
+
+    def checkOneSquare(self):
+        start, end = self._get_word_bounds(self.selected_row, self.selected_col, self.highlight_mode)
+        if start == end:  # if it's one letter word, then switch to the other direction.
+            self.highlight_mode = "down" if self.highlight_mode == "across" else "across"
 
     def event(self, event):  # noqa: N802
         if event.type() == event.Type.KeyPress:
@@ -255,6 +264,7 @@ class KrossWordWidget(QWidget):
         if key == Qt.Key_Left:
             if self.highlight_mode == "down":
                 self.highlight_mode = "across"
+                self.checkOneSquare()
                 self.cell_selected.emit(self.selected_row, self.selected_col)
                 self.update()
             else:
@@ -262,6 +272,7 @@ class KrossWordWidget(QWidget):
         elif key == Qt.Key_Right:
             if self.highlight_mode == "down":
                 self.highlight_mode = "across"
+                self.checkOneSquare()
                 self.cell_selected.emit(self.selected_row, self.selected_col)
                 self.update()
             else:
@@ -269,6 +280,7 @@ class KrossWordWidget(QWidget):
         elif key == Qt.Key_Up:
             if self.highlight_mode == "across":
                 self.highlight_mode = "down"
+                self.checkOneSquare()
                 self.cell_selected.emit(self.selected_row, self.selected_col)
                 self.update()
             else:
@@ -276,6 +288,7 @@ class KrossWordWidget(QWidget):
         elif key == Qt.Key_Down:
             if self.highlight_mode == "across":
                 self.highlight_mode = "down"
+                self.checkOneSquare()
                 self.cell_selected.emit(self.selected_row, self.selected_col)
                 self.update()
             else:
@@ -741,6 +754,7 @@ class KrossWordWidget(QWidget):
 
     def _toggle_highlight_mode(self) -> None:
         self.highlight_mode = "down" if self.highlight_mode == "across" else "across"
+        self.checkOneSquare()
         self.cell_selected.emit(self.selected_row, self.selected_col)
         self.update()
 

@@ -472,6 +472,10 @@ class MainWindow(QMainWindow):
         author_text = f"By {self.current_puzzle.author}" if self.current_puzzle.author else ""
         self.author_label.setText(author_text)
         self.editor_label.setText(f"Edited by {self.current_puzzle.editor}" if self.current_puzzle.editor else "")
+        if self.current_puzzle.editor:
+            self.circle.setVisible(True)
+        else:
+            self.circle.setVisible(False)
 
 
     def on_cell_selected(self, row, col):
